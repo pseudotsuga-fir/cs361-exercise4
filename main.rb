@@ -1,19 +1,31 @@
 # Exercise 5 Part 1 (Exception Handling)
 
+class AuditError < StandardError ; end
+
 class MentalState
   def auditable?
     # true if the external service is online, otherwise false
   end
+
   def audit!
-    # Could fail if external service is offline
+    begin
+      try_to_audit
+    rescue AuditError => e
+      puts e.message
+    end
   end
+
+  def try_to_audit
+    # try and audit here...
+    raise AuditError.new("Unable to audit")
+  end
+
   def do_work
     # Amazing stuff...
   end
 end
 
 def audit_sanity(bedtime_mental_state)
-  return 0 unless bedtime_mental_state.auditable?
   if bedtime_mental_state.audit!.ok?
     MorningMentalState.new(:ok)
   else 
@@ -21,12 +33,7 @@ def audit_sanity(bedtime_mental_state)
   end
 end
 
-if audit_sanity(bedtime_mental_state) == 0
-  puts "error"
-else
-  new_state = audit_sanity(bedtime_mental_state)
-end
-
+new_state = audit_sanity(bedtime_mental_state)
 
 
 
@@ -37,8 +44,10 @@ class BedtimeMentalState < MentalState ; end
 
 class MorningMentalState < MentalState ; end
 
+class NullMentalState < MentalState ; end
+
 def audit_sanity(bedtime_mental_state)
-  return nil unless bedtime_mental_state.auditable?
+  return NullMentalState unless bedtime_mental_state.auditable?
   if bedtime_mental_state.audit!.ok?
     MorningMentalState.new(:ok)
   else 
@@ -56,11 +65,26 @@ new_state.do_work
 
 require 'candy_service'
 
-machine = CandyMachine.new
-machine.prepare
+class CandyService
+  @machine = CandyMachine.new
+  
+  def prepare_candy_machine
+    @machine.prepare
+  end
 
-if machine.ready?
-  machine.make!
+  def machine_ready?
+    @machine.ready?
+  end
+
+  def machine_make!
+    @machine.make
+  end
+
+candy_machine = CandyService.new
+CandyService.prepare_candy_machine
+
+if CandyService.machine_ready?
+  CandyService.machine_make!
 else
   puts "sadness"
 end
